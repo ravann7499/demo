@@ -255,6 +255,24 @@
             font-size: 0.85rem;
         }
 
+        .telegram-button {
+            background: linear-gradient(135deg, #2AABEE 0%, #229ED9 100%);
+            box-shadow: 0 6px 20px rgba(42, 171, 238, 0.4);
+        }
+
+        .telegram-button:hover {
+            box-shadow: 0 10px 25px rgba(42, 171, 238, 0.5);
+        }
+
+        .instagram-button {
+            background: linear-gradient(135deg, #E1306C 0%, #C13584 50%, #833AB4 100%);
+            box-shadow: 0 6px 20px rgba(225, 48, 108, 0.4);
+        }
+
+        .instagram-button:hover {
+            box-shadow: 0 10px 25px rgba(225, 48, 108, 0.5);
+        }
+
         /* --- Sidebar Layout --- */
         .player-layout {
             display: grid;
@@ -521,7 +539,7 @@
         }
         @media (max-width: 600px) {
             body { padding: 0.75rem 0.5rem; }
-            .stream-header { flex-direction: column; gap: 0.75rem; text-align: center; padding: 1rem; }
+            .stream-header { flex-direction: row; gap: 0.75rem; text-align: left; padding: 0.85rem 1rem; justify-content: space-between; }
             .stream-header h1 { font-size: 0.95rem; }
             .live-badge { padding: 0.4rem 1rem; font-size: 0.65rem; }
             .grid-panels { grid-template-columns: 1fr; gap: 0.75rem; }
@@ -672,10 +690,6 @@
         }
 
         async function copyAndShare(button) {
-            const shareButton = button;
-            const shareUrl = encodeURIComponent(window.location.href);
-            const shareText = encodeURIComponent('Check out this live stream!');
-            
             // Use native share API (works on Android/iOS)
             if (navigator.share) {
                 try {
@@ -684,80 +698,21 @@
                         text: 'Check out this live stream!',
                         url: window.location.href
                     });
-                    return;
                 } catch (err) {
                     if (err.name !== 'AbortError') {
                         console.error('Share failed:', err);
                     }
                 }
+            } else {
+                // Fallback for desktop - copy to clipboard
+                const originalHTML = button.innerHTML;
+                try {
+                    await navigator.clipboard.writeText(window.location.href);
+                    button.innerHTML = `<i class="fa-solid fa-check"></i> Link Copied!`;
+                    button.classList.add('copied');
+                    setTimeout(() => { button.innerHTML = originalHTML; button.classList.remove('copied'); }, 2000);
+                } catch (err) { console.error('Failed to copy link:', err); }
             }
-            
-            // Fallback - show social media sharing options
-            const sharePopup = document.createElement('div');
-            sharePopup.style.cssText = `
-                position: fixed; top: 50%; left: 50%;
-                transform: translate(-50%, -50%);
-                background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98));
-                backdrop-filter: blur(25px);
-                border: 2px solid rgba(139, 92, 246, 0.2);
-                padding: 2rem;
-                border-radius: 24px;
-                z-index: 10000;
-                text-align: center;
-                min-width: 300px;
-                box-shadow: 0 30px 70px -15px rgba(0, 0, 0, 0.5);
-            `;
-            
-            sharePopup.innerHTML = `
-                <h3 style="color: #f1f5f9; margin-bottom: 1.5rem; font-size: 1.2rem;">Share to Social Media</h3>
-                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-                    <a href="https://wa.me/?text=${shareText}%20${shareUrl}" target="_blank" style="
-                        display: flex; align-items: center; justify-content: center; gap: 0.75rem;
-                        padding: 0.85rem; border-radius: 12px; background: #25D366; color: white;
-                        text-decoration: none; font-weight: 600; font-size: 0.9rem;
-                    ">
-                        <i class="fa-brands fa-whatsapp" style="font-size: 1.2rem;"></i> WhatsApp
-                    </a>
-                    <a href="https://t.me/share/url?url=${shareUrl}&text=${shareText}" target="_blank" style="
-                        display: flex; align-items: center; justify-content: center; gap: 0.75rem;
-                        padding: 0.85rem; border-radius: 12px; background: #2AABEE; color: white;
-                        text-decoration: none; font-weight: 600; font-size: 0.9rem;
-                    ">
-                        <i class="fa-brands fa-telegram" style="font-size: 1.2rem;"></i> Telegram
-                    </a>
-                    <a href="https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}" target="_blank" style="
-                        display: flex; align-items: center; justify-content: center; gap: 0.75rem;
-                        padding: 0.85rem; border-radius: 12px; background: #1DA1F2; color: white;
-                        text-decoration: none; font-weight: 600; font-size: 0.9rem;
-                    ">
-                        <i class="fa-brands fa-twitter" style="font-size: 1.2rem;"></i> Twitter
-                    </a>
-                    <a href="https://www.facebook.com/sharer/sharer.php?u=${shareUrl}" target="_blank" style="
-                        display: flex; align-items: center; justify-content: center; gap: 0.75rem;
-                        padding: 0.85rem; border-radius: 12px; background: #1877F2; color: white;
-                        text-decoration: none; font-weight: 600; font-size: 0.9rem;
-                    ">
-                        <i class="fa-brands fa-facebook" style="font-size: 1.2rem;"></i> Facebook
-                    </a>
-                    <button id="closeSharePopup" style="
-                        margin-top: 1rem; padding: 0.75rem; border-radius: 12px;
-                        background: transparent; border: 2px solid rgba(139, 92, 246, 0.3);
-                        color: #94a3b8; cursor: pointer; font-weight: 600; font-size: 0.85rem;
-                    ">Close</button>
-                </div>
-            `;
-            
-            document.body.appendChild(sharePopup);
-            
-            document.getElementById('closeSharePopup').addEventListener('click', function() {
-                document.body.removeChild(sharePopup);
-            });
-            
-            sharePopup.addEventListener('click', function(e) {
-                if (e.target === sharePopup) {
-                    document.body.removeChild(sharePopup);
-                }
-            });
         }
 
         // Initialize
